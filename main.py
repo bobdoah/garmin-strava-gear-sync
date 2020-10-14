@@ -1,9 +1,14 @@
 #!/usr/bin/python3
+import re
 
 import click
 import requests
 
+WEBHOST = "https://connect.garmin.com"
 REDIRECT = "https://connect.garmin.com/modern/"
+BASE_URL = "https://connect.garmin.com/en-US/signin"
+SSO = "https://sso.garmin.com/sso"
+CSS = "https://static.garmincdn.com/com.garmin.connect/ui/css/gauth-custom-v1.2-min.css"
 DATA = {
     'service': REDIRECT,
     'webhost': WEBHOST,
@@ -34,14 +39,14 @@ DATA = {
     'locationPromptShown': 'true',
     'showPassword': 'true'
 }
-URL_GC_LOGIN = 'https://sso.garmin.com/sso/signin?{}'.format(urllib.parse.urlencode(DATA))
+URL_GC_LOGIN = 'https://sso.garmin.com/sso/signin'
 
 def get_session(username, password):
-    session = request.Session()
+    session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, \
         like Gecko) Chrome/54.0.2816.0 Safari/537.36'})
-    session.get(URL_GC_LOGIN)
-    login_response = session.post(URL_GC_LOGIN, headers={'referer':URL_GC_LOGIN}, data={
+    session.get(URL_GC_LOGIN, params=DATA)
+    login_response = session.post(URL_GC_LOGIN, params=DATA, headers={'referer':URL_GC_LOGIN}, data={
         'username': username,
         'password': password,
         'embed': 'false',
@@ -58,7 +63,10 @@ def get_session(username, password):
 @click.command()
 @click.argument('username')
 @click.argument('password')
-def get_gear(username, password)
+def get_gear(username, password):
     session = get_session(username, password)
 
 
+
+if __name__ == "__main__":
+    get_gear()
