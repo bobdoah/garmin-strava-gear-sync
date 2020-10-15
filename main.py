@@ -43,10 +43,12 @@ DATA = {
 URL_GC_LOGIN = 'https://sso.garmin.com/sso/signin'
 URL_GC_ACTIVITIES = 'https://connect.garmin.com/modern/activities?'
 
-def get_session(username, password):
+def get_session():
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, \
         like Gecko) Chrome/54.0.2816.0 Safari/537.36'})
+
+def authorize(session, username, password):
     session.get(URL_GC_LOGIN, params=DATA)
     login_response = session.post(URL_GC_LOGIN, params=DATA, headers={'referer':URL_GC_LOGIN}, data={
         'username': username,
@@ -61,9 +63,12 @@ def get_session(username, password):
     click.echo('ticket: {}'.format(ticket.group(1)))
     login_auth_response = session.get(URL_GC_ACTIVITIES, params={'ticket': ticket})
     login_auth_response.raise_for_status()
+    userdata = re.search(r"VIEWER_SOCIAL_PROFILE\s*=\s*JSON.parse\((.+)\);$", login_auth_response
     return session
     
+
 GC_GEAR_TYPE_BIKE=1602583635934
+
 
 def get_user_profile_pk(session):
     return 4726237
