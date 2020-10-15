@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import json
 import re
 
 import click
@@ -40,6 +41,7 @@ DATA = {
     'showPassword': 'true'
 }
 URL_GC_LOGIN = 'https://sso.garmin.com/sso/signin'
+URL_GC_ACTIVITIES = 'https://connect.garmin.com/modern/activities?'
 
 def get_session(username, password):
     session = requests.Session()
@@ -52,21 +54,31 @@ def get_session(username, password):
         'embed': 'false',
         'rememberme':'on'
     })
+    login_response.raise_for_status()
     ticket = re.match(r".*\?ticket=([-\w]+)\";.*", login_response.text, flags=re.MULTILINE|re.DOTALL)
     if not(ticket):
         raise Exception('Did not get a ticket in the login response')
     click.echo('ticket: {}'.format(ticket.group(1)))
+    login_auth_response = session.get(URL_GC_ACTIVITIES, params={'ticket': ticket})
+    login_auth_response.raise_for_status()
     return session
     
+GC_GEAR_TYPE_BIKE=1602583635934
 
+def get_user_profile_pk(session):
+    return 4726237
 
 @click.command()
 @click.argument('username')
 @click.argument('password')
-def get_gear(username, password):
+def get_gear_bike(username, password):
     session = get_session(username, password)
-
-
+    response = session.get('https://connect.garmin.com/modern/proxy/gear-service/gear/filterGear', params={
+        'userProfilePk': get_user_profile_pk(session),
+        '_':GC_GEAR_TYPE_BIKE
+    })
+    gear = r.json()
+    click.echo("Got gear:\n{}".format(json.dumps(gear)))
 
 if __name__ == "__main__":
     get_gear()
