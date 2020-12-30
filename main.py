@@ -47,6 +47,7 @@ def get_session():
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, \
         like Gecko) Chrome/54.0.2816.0 Safari/537.36'})
+    return session
 
 def authorize(session, username, password):
     session.get(URL_GC_LOGIN, params=DATA)
@@ -60,10 +61,11 @@ def authorize(session, username, password):
     ticket = re.match(r".*\?ticket=([-\w]+)\";.*", login_response.text, flags=re.MULTILINE|re.DOTALL)
     if not(ticket):
         raise Exception('Did not get a ticket in the login response')
-    click.echo('ticket: {}'.format(ticket.group(1)))
+    ticket = ticket.group(1)
+    click.echo('ticket: {}'.format(ticket))
     login_auth_response = session.get(URL_GC_ACTIVITIES, params={'ticket': ticket})
     login_auth_response.raise_for_status()
-    userdata = re.search(r"VIEWER_SOCIAL_PROFILE\s*=\s*JSON.parse\((.+)\);$", login_auth_response
+    userdata = re.search(r"VIEWER_SOCIAL_PROFILE\s*=\s*JSON.parse\((.+)\);$", login_auth_response.text)
     return session
     
 
@@ -77,13 +79,13 @@ def get_user_profile_pk(session):
 @click.argument('username')
 @click.argument('password')
 def get_gear_bike(username, password):
-    session = get_session(username, password)
+    session = authorize(get_session(), username, password)
     response = session.get('https://connect.garmin.com/modern/proxy/gear-service/gear/filterGear', params={
         'userProfilePk': get_user_profile_pk(session),
         '_':GC_GEAR_TYPE_BIKE
     })
-    gear = r.json()
+    gear = response.json()
     click.echo("Got gear:\n{}".format(json.dumps(gear)))
 
 if __name__ == "__main__":
-    get_gear()
+    get_gear_bike()
